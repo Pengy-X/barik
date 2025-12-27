@@ -1,21 +1,18 @@
 import Combine
 import EventKit
 import Foundation
+import SwiftUI
 
 class CalendarManager: ObservableObject {
-    let configProvider: ConfigProvider
-    var config: ConfigData? {
-        configProvider.config["calendar"]?.dictionaryValue
+    @AppStorage("widget.time.calendarAllowList") private var allowListData: Data = Data()
+    @AppStorage("widget.time.calendarDenyList") private var denyListData: Data = Data()
+    
+    private var allowList: [String] {
+        (try? JSONDecoder().decode([String].self, from: allowListData)) ?? []
     }
-    var allowList: [String] {
-        Array(
-            (config?["allow-list"]?.arrayValue?.map { $0.stringValue ?? "" }
-                .drop(while: { $0 == "" })) ?? [])
-    }
-    var denyList: [String] {
-        Array(
-            (config?["deny-list"]?.arrayValue?.map { $0.stringValue ?? "" }
-                .drop(while: { $0 == "" })) ?? [])
+    
+    private var denyList: [String] {
+        (try? JSONDecoder().decode([String].self, from: denyListData)) ?? []
     }
 
     @Published var nextEvent: EKEvent?
@@ -24,8 +21,7 @@ class CalendarManager: ObservableObject {
     private let eventStore = EKEventStore()
     private var timer: Timer?
 
-    init(configProvider: ConfigProvider) {
-        self.configProvider = configProvider
+    init() {
         requestAccess()
         startMonitoring()
     }

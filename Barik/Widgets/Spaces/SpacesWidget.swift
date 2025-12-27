@@ -2,17 +2,39 @@ import SwiftUI
 
 struct SpacesWidget: View {
     @StateObject var viewModel = SpacesViewModel()
-
-    @ObservedObject var configManager = ConfigManager.shared
-    var foregroundHeight: CGFloat { configManager.config.experimental.foreground.resolveHeight() }
+    
+    @AppStorage("foregroundHeight") private var foregroundHeightString = "default"
+    
+    let showKey: Bool
+    let showTitle: Bool
+    let titleMaxLength: Int
+    
+    private var foregroundHeight: CGFloat {
+        switch foregroundHeightString {
+        case "default":
+            return CGFloat(Constants.menuBarHeight)
+        case "menu-bar":
+            return NSApplication.shared.mainMenu.map({ CGFloat($0.menuBarHeight) }) ?? CGFloat(Constants.menuBarHeight)
+        default:
+            if let customValue = Float(foregroundHeightString) {
+                return CGFloat(customValue)
+            }
+            return CGFloat(Constants.menuBarHeight)
+        }
+    }
 
     var body: some View {
         HStack(spacing: foregroundHeight < 30 ? 0 : 8) {
             ForEach(viewModel.spaces) { space in
-                SpaceView(space: space)
+                SpaceView(
+                    space: space,
+                    showKey: showKey,
+                    showTitle: showTitle,
+                    titleMaxLength: titleMaxLength,
+                    foregroundHeight: foregroundHeight
+                )
             }
         }
-        .experimentalConfiguration(horizontalPadding: 5, cornerRadius: 10)
         .animation(.smooth(duration: 0.3), value: viewModel.spaces)
         .foregroundStyle(Color.foreground)
         .environmentObject(viewModel)
@@ -21,18 +43,13 @@ struct SpacesWidget: View {
 
 /// This view shows a space with its windows.
 private struct SpaceView: View {
-    @EnvironmentObject var configProvider: ConfigProvider
     @EnvironmentObject var viewModel: SpacesViewModel
 
-    var config: ConfigData { configProvider.config }
-    var spaceConfig: ConfigData { config["space"]?.dictionaryValue ?? [:] }
-
-    @ObservedObject var configManager = ConfigManager.shared
-    var foregroundHeight: CGFloat { configManager.config.experimental.foreground.resolveHeight() }
-
-    var showKey: Bool { spaceConfig["show-key"]?.boolValue ?? true }
-
     let space: AnySpace
+    let showKey: Bool
+    let showTitle: Bool
+    let titleMaxLength: Int
+    let foregroundHeight: CGFloat
 
     @State var isHovered = false
 
@@ -41,7 +58,7 @@ private struct SpaceView: View {
         HStack(spacing: 0) {
             Spacer().frame(width: 10)
             if showKey {
-                Text(space.id)
+                Text(space.label)
                     .font(.headline)
                     .frame(minWidth: 15)
                     .fixedSize(horizontal: true, vertical: false)
@@ -49,7 +66,12 @@ private struct SpaceView: View {
             }
             HStack(spacing: 2) {
                 ForEach(space.windows) { window in
-                    WindowView(window: window, space: space)
+                    WindowView(
+                        window: window,
+                        space: space,
+                        showTitle: showTitle,
+                        titleMaxLength: titleMaxLength
+                    )
                 }
             }
             Spacer().frame(width: 10)
@@ -79,31 +101,22 @@ private struct SpaceView: View {
 
 /// This view shows a window and its icon.
 private struct WindowView: View {
-    @EnvironmentObject var configProvider: ConfigProvider
     @EnvironmentObject var viewModel: SpacesViewModel
-
-    var config: ConfigData { configProvider.config }
-    var windowConfig: ConfigData { config["window"]?.dictionaryValue ?? [:] }
-    var titleConfig: ConfigData {
-        windowConfig["title"]?.dictionaryValue ?? [:]
-    }
-
-    var showTitle: Bool { windowConfig["show-title"]?.boolValue ?? true }
-    var maxLength: Int { titleConfig["max-length"]?.intValue ?? 50 }
-    var alwaysDisplayAppTitleFor: [String] { titleConfig["always-display-app-name-for"]?.arrayValue?.filter({ $0.stringValue != nil }).map { $0.stringValue! } ?? [] }
 
     let window: AnyWindow
     let space: AnySpace
+    let showTitle: Bool
+    let titleMaxLength: Int
 
     @State var isHovered = false
 
     var body: some View {
-        let titleMaxLength = maxLength
         let size: CGFloat = 21
-        let sameAppCount = space.windows.filter { $0.appName == window.appName }
-            .count
-        let title = sameAppCount > 1 && !alwaysDisplayAppTitleFor.contains { $0 == window.appName } ? window.title : (window.appName ?? "")
+        let sameAppCount = space.windows.filter { $0.appName == window.appName }.count
+        // Simplified: always use app name for multiple windows of same app
+        let title = sameAppCount > 1 ? window.title : (window.appName ?? "")
         let spaceIsFocused = space.windows.contains { $0.isFocused }
+        
         HStack {
             ZStack {
                 if let icon = window.appIcon {

@@ -4,9 +4,13 @@ struct MenuBarPopupView<Content: View>: View {
     let content: Content
     let isPreview: Bool
 
-    @ObservedObject var configManager = ConfigManager.shared
-    var foregroundHeight: CGFloat { configManager.config.experimental.foreground.resolveHeight() }
+    @AppStorage("foregroundHeight") private var foregroundHeightDouble: Double = 100.0
 
+    var foregroundHeight: CGFloat {
+        CGFloat(foregroundHeightDouble)
+    }
+    
+    
     @State private var contentHeight: CGFloat = 0
     @State private var viewFrame: CGRect = .zero
     @State private var animationValue: Double = 0.01

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		39E093922EFF681600EEA7FA /* AXSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 39E093912EFF681600EEA7FA /* AXSwift */; };
 		F66C98C52D60E35600C3C53C /* TOMLDecoder in Frameworks */ = {isa = PBXBuildFile; productRef = F66C98C42D60E35600C3C53C /* TOMLDecoder */; };
 		F6B514042D6C5F3400DFEB43 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = F6B514032D6C5F3400DFEB43 /* MarkdownUI */; };
 /* End PBXBuildFile section */
@@ -41,6 +42,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				39E093922EFF681600EEA7FA /* AXSwift in Frameworks */,
 				F66C98C52D60E35600C3C53C /* TOMLDecoder in Frameworks */,
 				F6B514042D6C5F3400DFEB43 /* MarkdownUI in Frameworks */,
 			);
@@ -87,6 +89,7 @@
 			packageProductDependencies = (
 				F66C98C42D60E35600C3C53C /* TOMLDecoder */,
 				F6B514032D6C5F3400DFEB43 /* MarkdownUI */,
+				39E093912EFF681600EEA7FA /* AXSwift */,
 			);
 			productName = Barik;
 			productReference = C10E2F8A2D41235900AC957C /* Barik.app */;
@@ -137,6 +140,7 @@
 			packageReferences = (
 				F66C98C32D60E35600C3C53C /* XCRemoteSwiftPackageReference "TOMLDecoder" */,
 				F6B514022D6C5F3400DFEB43 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
+				39E093902EFF681600EEA7FA /* XCRemoteSwiftPackageReference "AXSwift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C10E2F8B2D41235900AC957C /* Products */;
@@ -381,6 +385,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		39E093902EFF681600EEA7FA /* XCRemoteSwiftPackageReference "AXSwift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/tmandry/AXSwift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.3.2;
+			};
+		};
 		F66C98C32D60E35600C3C53C /* XCRemoteSwiftPackageReference "TOMLDecoder" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/dduan/TOMLDecoder";
@@ -400,6 +412,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		39E093912EFF681600EEA7FA /* AXSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 39E093902EFF681600EEA7FA /* XCRemoteSwiftPackageReference "AXSwift" */;
+			productName = AXSwift;
+		};
 		F66C98C42D60E35600C3C53C /* TOMLDecoder */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = F66C98C32D60E35600C3C53C /* XCRemoteSwiftPackageReference "TOMLDecoder" */;

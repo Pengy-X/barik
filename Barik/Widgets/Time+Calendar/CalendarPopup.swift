@@ -4,7 +4,7 @@ import SwiftUI
 struct CalendarPopup: View {
     let calendarManager: CalendarManager
 
-    @ObservedObject var configProvider: ConfigProvider
+    @AppStorage("widget.time.popupVariant") private var popupVariantString = "box"
     @State private var selectedVariant: MenuBarPopupVariant = .box
 
     var body: some View {
@@ -12,32 +12,27 @@ struct CalendarPopup: View {
             selectedVariant: selectedVariant,
             onVariantSelected: { variant in
                 selectedVariant = variant
-                ConfigManager.shared.updateConfigValue(
-                    key: "widgets.default.time.popup.view-variant",
-                    newValue: variant.rawValue
-                )
+                popupVariantString = variant.rawValue
             },
             box: { CalendarBoxPopup() },
             vertical: { CalendarVerticalPopup(calendarManager) },
             horizontal: { CalendarHorizontalPopup(calendarManager) }
         )
         .onAppear {
-            if let variantString = configProvider.config["popup"]?
-                .dictionaryValue?["view-variant"]?.stringValue,
-                let variant = MenuBarPopupVariant(rawValue: variantString)
-            {
+            loadVariant()
+        }
+        .onChange(of: popupVariantString) { _, newValue in
+            if let variant = MenuBarPopupVariant(rawValue: newValue) {
                 selectedVariant = variant
-            } else {
-                selectedVariant = .box
             }
         }
-        .onReceive(configProvider.$config) { newConfig in
-            if let variantString = newConfig["popup"]?.dictionaryValue?[
-                "view-variant"]?.stringValue,
-                let variant = MenuBarPopupVariant(rawValue: variantString)
-            {
-                selectedVariant = variant
-            }
+    }
+    
+    private func loadVariant() {
+        if let variant = MenuBarPopupVariant(rawValue: popupVariantString) {
+            selectedVariant = variant
+        } else {
+            selectedVariant = .box
         }
     }
 }
@@ -358,16 +353,8 @@ private struct EventRow: View {
 }
 
 struct CalendarPopup_Previews: PreviewProvider {
-    var configProvider: ConfigProvider = ConfigProvider(config: ConfigData())
-    var calendarManager: CalendarManager
-
-    init() {
-        self.calendarManager = CalendarManager(configProvider: configProvider)
-    }
-
     static var previews: some View {
-        let configProvider = ConfigProvider(config: ConfigData())
-        let calendarManager = CalendarManager(configProvider: configProvider)
+        let calendarManager = CalendarManager()
 
         CalendarBoxPopup()
             .background(Color.black)

@@ -2,23 +2,13 @@ import EventKit
 import SwiftUI
 
 struct TimeWidget: View {
-    @EnvironmentObject var configProvider: ConfigProvider
-    var config: ConfigData { configProvider.config }
-    var calendarConfig: ConfigData? { config["calendar"]?.dictionaryValue }
-
-    var format: String { config["format"]?.stringValue ?? "E d, J:mm" }
-    var timeZone: String? { config["time-zone"]?.stringValue }
-
-    var calendarFormat: String {
-        calendarConfig?["format"]?.stringValue ?? "J:mm"
-    }
-    var calendarShowEvents: Bool {
-        calendarConfig?["show-events"]?.boolValue ?? true
-    }
-
-    @State private var currentTime = Date()
+    let format: String
+    let timeZone: String?
+    let calendarFormat: String
+    let showEvents: Bool
     let calendarManager: CalendarManager
 
+    @State private var currentTime = Date()
     @State private var rect = CGRect()
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common)
@@ -28,11 +18,11 @@ struct TimeWidget: View {
         VStack(alignment: .trailing, spacing: 0) {
             Text(formattedTime(pattern: format, from: currentTime))
                 .fontWeight(.semibold)
-            if let event = calendarManager.nextEvent, calendarShowEvents {
-                Text(eventText(for: event))
-                    .opacity(0.8)
-                    .font(.subheadline)
-            }
+//            if let event = calendarManager.nextEvent, showEvents {
+//                Text(eventText(for: event))
+//                    .opacity(0.8)
+//                    .font(.subheadline)
+//            }
         }
         .font(.headline)
         .foregroundStyle(.foregroundOutside)
@@ -52,15 +42,12 @@ struct TimeWidget: View {
                     }
             }
         )
-        .experimentalConfiguration(cornerRadius: 15)
         .frame(maxHeight: .infinity)
         .background(.black.opacity(0.001))
         .monospacedDigit()
         .onTapGesture {
             MenuBarPopup.show(rect: rect, id: "calendar") {
-                CalendarPopup(
-                    calendarManager: calendarManager,
-                    configProvider: configProvider)
+                CalendarPopup(calendarManager: calendarManager)
             }
         }
     }
@@ -96,12 +83,16 @@ struct TimeWidget: View {
 
 struct TimeWidget_Previews: PreviewProvider {
     static var previews: some View {
-        let provider = ConfigProvider(config: ConfigData())
-        let manager = CalendarManager(configProvider: provider)
+        let manager = CalendarManager()
 
         ZStack {
-            TimeWidget(calendarManager: manager)
-                .environmentObject(provider)
+            TimeWidget(
+                format: "E d, J:mm",
+                timeZone: nil,
+                calendarFormat: "J:mm",
+                showEvents: true,
+                calendarManager: manager
+            )
         }.frame(width: 500, height: 100)
     }
 }

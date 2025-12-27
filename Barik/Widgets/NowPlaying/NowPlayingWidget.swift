@@ -3,7 +3,6 @@ import SwiftUI
 // MARK: - Now Playing Widget
 
 struct NowPlayingWidget: View {
-    @EnvironmentObject var configProvider: ConfigProvider
     @ObservedObject var playingManager = NowPlayingManager.shared
 
     @State private var widgetFrame: CGRect = .zero
@@ -28,7 +27,7 @@ struct NowPlayingWidget: View {
                 VisibleNowPlayingContent(song: song, width: animatedWidth)
                     .onTapGesture {
                         MenuBarPopup.show(rect: widgetFrame, id: "nowplaying") {
-                            NowPlayingPopup(configProvider: configProvider)
+                            NowPlayingPopup()
                         }
                     }
             }
@@ -52,24 +51,46 @@ struct NowPlayingWidget: View {
 /// A view that composes the album art and song text into a capsule-shaped content view.
 struct NowPlayingContent: View {
     let song: NowPlayingSong
-    @ObservedObject var configManager = ConfigManager.shared
-    var foregroundHeight: CGFloat { configManager.config.experimental.foreground.resolveHeight() }
+    
+    @AppStorage("foregroundHeight") private var foregroundHeightString = "default"
+    @AppStorage("widgetsBackgroundEnabled") private var widgetsBackgroundEnabled = false
+    @AppStorage("widgetsBackgroundBlur") private var widgetsBackgroundBlur: Double = 3
+    
+    private var foregroundHeight: CGFloat {
+        switch foregroundHeightString {
+        case "default":
+            return CGFloat(Constants.menuBarHeight)
+        case "menu-bar":
+            return NSApplication.shared.mainMenu.map({ CGFloat($0.menuBarHeight) }) ?? CGFloat(Constants.menuBarHeight)
+        default:
+            if let customValue = Float(foregroundHeightString) {
+                return CGFloat(customValue)
+            }
+            return CGFloat(Constants.menuBarHeight)
+        }
+    }
+    
+    private var widgetBackgroundMaterial: Material {
+        let materials: [Material] = [.ultraThin, .thin, .regular, .thick, .ultraThick, .bar]
+        let index = Int(widgetsBackgroundBlur) - 1
+        return materials[min(max(index, 0), materials.count - 1)]
+    }
     
     var body: some View {
         Group {
             if foregroundHeight < 38 {
                 HStack(spacing: 8) {
                     AlbumArtView(song: song)
-                    SongTextView(song: song)
+                    SongTextView(song: song, foregroundHeight: foregroundHeight)
                 }
             } else {
                 HStack(spacing: 8) {
                     AlbumArtView(song: song)
-                    SongTextView(song: song)
+                    SongTextView(song: song, foregroundHeight: foregroundHeight)
                 }
                 .padding(.horizontal, foregroundHeight < 45 ? 8 : 12)
                 .frame(height: foregroundHeight < 45 ? 30 : 38)
-                .background(configManager.config.experimental.foreground.widgetsBackground.blur)
+//              .background(configManager.config.experimental.foreground.widgetsBackground.blur)
                 .clipShape(Capsule())
                 .overlay(
                     Capsule().stroke(Color.noActive, lineWidth: 1)
@@ -150,11 +171,9 @@ struct AlbumArtView: View {
 /// A view that displays the song title and artist.
 struct SongTextView: View {
     let song: NowPlayingSong
-    @ObservedObject var configManager = ConfigManager.shared
-    var foregroundHeight: CGFloat { configManager.config.experimental.foreground.resolveHeight() }
+    let foregroundHeight: CGFloat
 
     var body: some View {
-
         VStack(alignment: .leading, spacing: -1) {
             if foregroundHeight >= 30 {
                 Text(song.title)

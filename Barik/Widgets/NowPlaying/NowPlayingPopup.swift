@@ -2,45 +2,79 @@ import EventKit
 import SwiftUI
 
 struct NowPlayingPopup: View {
-    @ObservedObject var configProvider: ConfigProvider
-    @State private var selectedVariant: MenuBarPopupVariant = .horizontal
+    @AppStorage("widget.nowplaying.popupVariant") private var popupVariantString = "box"
+    @State private var selectedVariant: MenuBarPopupVariant = .box
 
     var body: some View {
         MenuBarPopupVariantView(
             selectedVariant: selectedVariant,
             onVariantSelected: { variant in
                 selectedVariant = variant
-                ConfigManager.shared.updateConfigValue(
-                    key: "widgets.default.nowplaying.popup.view-variant",
-                    newValue: variant.rawValue
-                )
+                popupVariantString = variant.rawValue
             },
             vertical: { NowPlayingVerticalPopup() },
             horizontal: { NowPlayingHorizontalPopup() }
         )
-        .onAppear(perform: loadVariant)
-        .onReceive(configProvider.$config, perform: updateVariant)
+        .onAppear {
+            loadVariant()
+        }
+        .onChange(of: popupVariantString) { _, newValue in
+            if let variant = MenuBarPopupVariant(rawValue: newValue) {
+                selectedVariant = variant
+            }
+        }
     }
     
-    /// Loads the initial view variant from configuration.
+    /// Loads the initial view variant from storage.
     private func loadVariant() {
-        if let variantString = configProvider.config["popup"]?
-            .dictionaryValue?["view-variant"]?.stringValue,
-           let variant = MenuBarPopupVariant(rawValue: variantString) {
+        if let variant = MenuBarPopupVariant(rawValue: popupVariantString) {
             selectedVariant = variant
         } else {
             selectedVariant = .box
         }
     }
-    
-    /// Updates the view variant when configuration changes.
-    private func updateVariant(newConfig: ConfigData) {
-        if let variantString = newConfig["popup"]?.dictionaryValue?["view-variant"]?.stringValue,
-           let variant = MenuBarPopupVariant(rawValue: variantString) {
-            selectedVariant = variant
-        }
-    }
 }
+
+//struct NowPlayingPopup: View {
+//    @ObservedObject var configProvider: ConfigProvider
+//    @State private var selectedVariant: MenuBarPopupVariant = .horizontal
+//
+//    var body: some View {
+//        MenuBarPopupVariantView(
+//            selectedVariant: selectedVariant,
+//            onVariantSelected: { variant in
+//                selectedVariant = variant
+//                ConfigManager.shared.updateConfigValue(
+//                    key: "widgets.default.nowplaying.popup.view-variant",
+//                    newValue: variant.rawValue
+//                )
+//            },
+//            vertical: { NowPlayingVerticalPopup() },
+//            horizontal: { NowPlayingHorizontalPopup() }
+//        )
+//        .onAppear(perform: loadVariant)
+//        .onReceive(configProvider.$config, perform: updateVariant)
+//    }
+//    
+//    /// Loads the initial view variant from configuration.
+//    private func loadVariant() {
+//        if let variantString = configProvider.config["popup"]?
+//            .dictionaryValue?["view-variant"]?.stringValue,
+//           let variant = MenuBarPopupVariant(rawValue: variantString) {
+//            selectedVariant = variant
+//        } else {
+//            selectedVariant = .box
+//        }
+//    }
+//    
+//    /// Updates the view variant when configuration changes.
+//    private func updateVariant(newConfig: ConfigData) {
+//        if let variantString = newConfig["popup"]?.dictionaryValue?["view-variant"]?.stringValue,
+//           let variant = MenuBarPopupVariant(rawValue: variantString) {
+//            selectedVariant = variant
+//        }
+//    }
+//}
 
 /// A vertical layout for the now playing popup.
 private struct NowPlayingVerticalPopup: View {
