@@ -1,15 +1,11 @@
-//
-//  BatteryWidgetTest.swift
-//  Barik
-//
-//  Created by Pengy X on 12/24/25.
-//
 import SwiftUI
 
 struct BatteryWidget: View {
-    let showPercentage: Bool
-    let warningLevel: Int
-    let criticalLevel: Int
+    @EnvironmentObject var configProvider: ConfigProvider
+    var config: ConfigData { configProvider.config }
+    var showPercentage: Bool { config["show-percentage"]?.boolValue ?? true }
+    var warningLevel: Int { config["warning-level"]?.intValue ?? 20 }
+    var criticalLevel: Int { config["critical-level"]?.intValue ?? 10 }
 
     @StateObject private var batteryManager = BatteryManager()
     private var level: Int { batteryManager.batteryLevel }
@@ -21,9 +17,9 @@ struct BatteryWidget: View {
     var body: some View {
         ZStack {
             ZStack(alignment: .leading) {
-                BatteryBodyView(mask: false, showPercentage: showPercentage)
+                BatteryBodyView(mask: false)
                     .opacity(showPercentage ? 0.3 : 0.4)
-                BatteryBodyView(mask: true, showPercentage: showPercentage)
+                BatteryBodyView(mask: true)
                     .clipShape(
                         Rectangle().path(
                             in: CGRect(
@@ -37,10 +33,8 @@ struct BatteryWidget: View {
                     )
                     .foregroundStyle(batteryColor)
                 BatteryText(
-                    level: level,
-                    isCharging: isCharging,
-                    isPluggedIn: isPluggedIn,
-                    showPercentage: showPercentage
+                    level: level, isCharging: isCharging,
+                    isPluggedIn: isPluggedIn
                 )
                 .foregroundStyle(batteryTextColor)
             }
@@ -64,6 +58,7 @@ struct BatteryWidget: View {
         .onTapGesture {
             MenuBarPopup.show(rect: rect, id: "battery") { BatteryPopup() }
         }
+
     }
 
     private var batteryTextColor: Color {
@@ -90,10 +85,13 @@ struct BatteryWidget: View {
 }
 
 private struct BatteryText: View {
+    @EnvironmentObject var configProvider: ConfigProvider
+    var config: ConfigData { configProvider.config }
+    var showPercentage: Bool { config["show-percentage"]?.boolValue ?? true }
+
     let level: Int
     let isCharging: Bool
     let isPluggedIn: Bool
-    let showPercentage: Bool
 
     var body: some View {
         HStack(alignment: .center, spacing: -1) {
@@ -126,7 +124,10 @@ private struct BatteryText: View {
 
 private struct BatteryBodyView: View {
     let mask: Bool
-    let showPercentage: Bool
+
+    @EnvironmentObject var configProvider: ConfigProvider
+    var config: ConfigData { configProvider.config }
+    var showPercentage: Bool { config["show-percentage"]?.boolValue ?? true }
 
     var body: some View {
         ZStack {
@@ -152,12 +153,9 @@ private struct BatteryBodyView: View {
 struct BatteryWidget_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
-            BatteryWidget(
-                showPercentage: true,
-                warningLevel: 30,
-                criticalLevel: 10
-            )
+            BatteryWidget()
         }.frame(width: 200, height: 100)
             .background(.yellow)
+            .environmentObject(ConfigProvider(config: [:]))
     }
 }
