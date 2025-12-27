@@ -1,4 +1,5 @@
-A fork of Barik with the goal of adding some stuff to it. 
+This is a fork of Barik with the goal of adding some stuff to it. 
+It uses some code from other forks, so thanks to plyght, einouqo, and qusaismael for making those cool things in their Barik forks
 
 ----
 
